@@ -1,6 +1,6 @@
 C:\>cd Ai-Zeki
 ------------------------------------------------
-C:\Ai-Zeki>zeki.exe --sse
+C:\Ai-Zeki>zeki --sse
 Zeki MCP Server (SSE) starting on port 8080...
 MCP SSE server listening on port 8080
   SSE endpoint:  http://localhost:8080/sse
