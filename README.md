@@ -10,6 +10,6 @@ Press Ctrl+C to stop the server
 Ai-Zeki\node-mcp-ui>node server.js
 Zeki MCP UI: http://localhost:3000
 [SSE] Connected
-[SSE] Endpoint: /messages?sessionId=sse-28304
+[SSE] Endpoint: /messages?sessionId=sse-random
 [MCP] Initialized
 ------------------------------------------------
