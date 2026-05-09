@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zeki AI Model - MCP Web Console</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="logo">ZEKI <span>AI Model Console</span></div>
+  <div class="header-right">
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" data-lang="tr" onclick="setLang('tr')">TR</button>
+    </div>
+    <div class="status-bar">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText" data-i18n="status.disconnected">Disconnected</span>
+      <span class="sep">|</span>
+      <span id="modelInfo" data-i18n="status.noModel">No model loaded</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav class="sidebar">
+    <button class="nav-btn active" data-section="overview" data-i18n="nav.overview">Overview</button>
+    <button class="nav-btn" data-section="create" data-i18n="nav.create">Create Model</button>
+    <button class="nav-btn" data-section="layers" data-i18n="nav.layers">Add Layers</button>
+    <button class="nav-btn" data-section="inspect" data-i18n="nav.inspect">Inspect Model</button>
+    <button class="nav-btn" data-section="predict" data-i18n="nav.predict">Predict</button>
+    <button class="nav-btn" data-section="train" data-i18n="nav.train">Train</button>
+    <button class="nav-btn" data-section="evaluate" data-i18n="nav.evaluate">Evaluate</button>
+    <button class="nav-btn" data-section="files" data-i18n="nav.files">Save / Load</button>
+    <button class="nav-btn" data-section="resources" data-i18n="nav.resources">Resources</button>
+    <button class="nav-btn" data-section="settings" data-i18n="nav.settings">Settings</button>
+  </nav>
+
+  <div class="content">
+    <!-- Overview -->
+    <section id="section-overview" class="section active">
+      <h2 data-i18n="overview.title">Model Overview</h2>
+      <div class="card" id="overviewCard">
+        <div class="placeholder" data-i18n="overview.placeholder" data-i18n-html="true">Click <strong>Refresh</strong> to load model info</div>
+      </div>
+      <button class="btn btn-primary" onclick="refreshModelInfo()" data-i18n="overview.refresh">Refresh</button>
+      <button class="btn" onclick="listLayers()" data-i18n="overview.listLayers">List Layers</button>
+      <div id="overviewLayers" class="mt-1"></div>
+    </section>
+
+    <!-- Create Model -->
+    <section id="section-create" class="section">
+      <h2 data-i18n="create.title">Create New Model</h2>
+      <div class="card">
+        <label data-i18n="create.inputShape" data-i18n-html="true">Input Shape (comma-separated, e.g. <code>1, 784</code>)</label>
+        <input type="text" id="createShape" value="1, 5" placeholder="1, 784">
+        <button class="btn btn-primary" onclick="createModel()" data-i18n="create.createBtn">Create Model</button>
+        <div id="createResult" class="result mt-1"></div>
+      </div>
+    </section>
+
+    <!-- Add Layers -->
+    <section id="section-layers" class="section">
+      <h2 data-i18n="layers.title">Add Layers</h2>
+      <div class="card">
+        <label data-i18n="layers.layerType">Layer Type</label>
+        <select id="layerType" onchange="updateLayerParams()">
+          <option value="dense" data-i18n="layerType.dense">Dense</option>
+          <option value="conv2d" data-i18n="layerType.conv2d">Conv2D</option>
+          <option value="relu" data-i18n="layerType.relu">ReLU</option>
+          <option value="sigmoid" data-i18n="layerType.sigmoid">Sigmoid</option>
+          <option value="tanh" data-i18n="layerType.tanh">Tanh</option>
+          <option value="softmax" data-i18n="layerType.softmax">Softmax</option>
+          <option value="dropout" data-i18n="layerType.dropout">Dropout</option>
+          <option value="flatten" data-i18n="layerType.flatten">Flatten</option>
+          <option value="lstm" data-i18n="layerType.lstm">LSTM</option>
+          <option value="gru" data-i18n="layerType.gru">GRU</option>
+          <option value="batchnorm" data-i18n="layerType.batchnorm">BatchNorm</option>
+          <option value="attention" data-i18n="layerType.attention">Attention</option>
+          <option value="transformer" data-i18n="layerType.transformer">Transformer</option>
+        </select>
+        <label data-i18n="layers.layerName">Layer Name (optional)</label>
+        <input type="text" id="layerName" placeholder="MyLayer">
+        <div id="layerParams">
+          <label>Input Dim</label>
+          <input type="number" id="lp_input_dim" value="5" placeholder="input_dim">
+          <label>Output Dim</label>
+          <input type="number" id="lp_output_dim" value="10" placeholder="output_dim">
+        </div>
+        <button class="btn btn-primary" onclick="addLayer()" data-i18n="layers.addBtn">Add Layer</button>
+        <div id="layerResult" class="result mt-1"></div>
+      </div>
+    </section>
+
+    <!-- Inspect Model -->
+    <section id="section-inspect" class="section">
+      <h2 data-i18n="inspect.title">Inspect Model</h2>
+      <div class="card">
+        <button class="btn btn-primary" onclick="getModelInfo()" data-i18n="inspect.getInfo">Get Model Info</button>
+        <button class="btn" onclick="listLayersDetailed()" data-i18n="inspect.listAll">List All Layers</button>
+        <button class="btn" onclick="getLayerOutput()" data-i18n="inspect.getOutput">Get Layer Output</button>
+        <label class="mt-1" data-i18n="inspect.layerIndex">Layer Index</label>
+        <input type="number" id="layerIndex" value="0" min="0">
+        <div id="inspectResult" class="result mt-1"></div>
+      </div>
+    </section>
+
+    <!-- Predict -->
+    <section id="section-predict" class="section">
+      <h2 data-i18n="predict.title">Run Prediction</h2>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="predict-standard" onclick="switchPredictTab('predict-standard')" data-i18n="predict.tab1">Standard</button>
+        <button class="tab-btn" data-tab="predict-auto" onclick="switchPredictTab('predict-auto')" data-i18n="predict.tab2">Auto JSON</button>
+        <button class="tab-btn" data-tab="predict-token" onclick="switchPredictTab('predict-token')" data-i18n="predict.tab3">Tokenization</button>
+      </div>
+
+      <div id="predict-standard" class="tab-content active">
+        <div class="card">
+          <label data-i18n="predict.inputData">Input Data (comma-separated floats)</label>
+          <input type="text" id="predictData" value="0.5, 0.3, 0.8, 0.1, 0.6">
+          <label data-i18n="predict.inputShape">Input Shape</label>
+          <input type="text" id="predictShape" value="1, 5">
+          <button class="btn btn-primary" onclick="runPredict()" data-i18n="predict.predictBtn">Predict</button>
+          <div id="predictResult" class="result mt-1"></div>
+        </div>
+      </div>
+
+      <div id="predict-auto" class="tab-content">
+        <div class="card">
+          <label data-i18n="predict.inputDataRaw">Raw Input Data (nested JSON, shape auto-detected)</label>
+          <textarea id="predictInputRaw" rows="3">[[0.1,0.2,0.3,0.4,0.5],[0.5,0.4,0.3,0.2,0.1]]</textarea>
+          <div class="auto-shape-info" id="predictAutoShape">Detected shape: -</div>
+          <button class="btn btn-primary" onclick="runPredictAuto()" data-i18n="predict.predictBtn">Predict</button>
+          <div id="predictAutoResult" class="result mt-1"></div>
+        </div>
+      </div>
+
+      <div id="predict-token" class="tab-content">
+        <div class="card">
+          <label data-i18n="predict.textData">Text Input Data (one sentence per line)</label>
+          <textarea id="predictTextInput" rows="3">merhaba dunya nasilsin</textarea>
+          <label data-i18n="predict.textMaxSeqLen">Max Sequence Length</label>
+          <input type="number" id="predictMaxSeqLen" value="6" min="1">
+          <div class="auto-shape-info" id="predictTokenInfo">Vocab: -  Shape: -</div>
+          <button class="btn btn-primary" onclick="runPredictToken()" data-i18n="predict.predictBtn">Predict</button>
+          <div id="predictTokenResult" class="result mt-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Train -->
+    <section id="section-train" class="section">
+      <h2 data-i18n="train.title">Train Model</h2>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="train-standard" onclick="switchTrainTab('train-standard')" data-i18n="train.tab1">Standard</button>
+        <button class="tab-btn" data-tab="train-auto" onclick="switchTrainTab('train-auto')" data-i18n="train.tab2">Auto JSON</button>
+        <button class="tab-btn" data-tab="train-token" onclick="switchTrainTab('train-token')" data-i18n="train.tab3">Tokenization</button>
+      </div>
+
+      <div id="train-standard" class="tab-content active">
+        <div class="card">
+          <label data-i18n="train.inputData">Train Input Data (flat JSON array) — e.g. [0.1,0.2,0.3,0.4,0.5,0.5,0.4,0.3,0.2,0.1]</label>
+          <textarea id="trainInput" rows="3">[0.1,0.2,0.3,0.4,0.5,0.5,0.4,0.3,0.2,0.1]</textarea>
+          <label data-i18n="train.targetData">Train Target Data (flat JSON array) — e.g. [1.0,0.0,0.0,1.0]</label>
+          <textarea id="trainTarget" rows="3">[1.0,0.0,0.0,1.0]</textarea>
+          <label data-i18n="train.inputShape">Input Shape</label>
+          <input type="text" id="trainInputShape" value="2, 5">
+          <label data-i18n="train.targetShape">Target Shape</label>
+          <input type="text" id="trainTargetShape" value="2, 2">
+          <label data-i18n="train.epochs">Epochs</label>
+          <input type="number" id="trainEpochs" value="5" min="1">
+          <label data-i18n="train.batchSize">Batch Size</label>
+          <input type="number" id="trainBatchSize" value="2" min="1">
+          <button class="btn btn-primary" onclick="trainModel()" data-i18n="train.trainBtn">Train</button>
+          <button class="btn" onclick="trainStep()" data-i18n="train.stepBtn">Single Train Step</button>
+          <div id="trainResult" class="result mt-1"></div>
+        </div>
+      </div>
+
+      <div id="train-auto" class="tab-content">
+        <div class="card">
+          <label data-i18n="train.inputDataRaw">Raw Train Input Data (nested JSON, shape auto-detected) — e.g. [[0.1,0.2,0.3,0.4,0.5],[0.5,0.4,0.3,0.2,0.1]]</label>
+          <textarea id="trainInputRaw" rows="3">[[0.1,0.2,0.3,0.4,0.5],[0.5,0.4,0.3,0.2,0.1]]</textarea>
+          <label data-i18n="train.targetDataRaw">Raw Train Target Data (nested JSON, shape auto-detected) — e.g. [[1.0,0.0],[0.0,1.0]]</label>
+          <textarea id="trainTargetRaw" rows="3">[[1.0,0.0],[0.0,1.0]]</textarea>
+          <div class="auto-shape-info" id="trainAutoShape">Detected shape: -</div>
+          <label data-i18n="train.epochs">Epochs</label>
+          <input type="number" id="trainEpochsAuto" value="5" min="1">
+          <label data-i18n="train.batchSize">Batch Size</label>
+          <input type="number" id="trainBatchSizeAuto" value="2" min="1">
+          <button class="btn btn-primary" onclick="trainModelAuto()" data-i18n="train.trainBtn">Train</button>
+          <button class="btn" onclick="trainStepAuto()" data-i18n="train.stepBtn">Single Train Step</button>
+          <div id="trainAutoResult" class="result mt-1"></div>
+        </div>
+      </div>
+
+      <div id="train-token" class="tab-content">
+        <div class="card">
+          <label data-i18n="train.textData">Text Input Data (one sentence per line)</label>
+          <textarea id="trainTextInput" rows="3">merhaba dunya nasilsin
+ben iyiyim sen nasilsin
+bugun hava cok guzel</textarea>
+          <label data-i18n="train.textMaxSeqLen">Input Max Sequence Length</label>
+          <input type="number" id="trainMaxSeqLen" value="6" min="1">
+          <label data-i18n="train.textTargets">Text Target Data (one target text per line)</label>
+          <textarea id="trainTextTarget" rows="3">selam
+merhaba
+iyi</textarea>
+          <label data-i18n="train.textTargetMaxSeqLen">Target Max Sequence Length</label>
+          <input type="number" id="trainTargetMaxSeqLen" value="3" min="1">
+          <div class="auto-shape-info" id="trainTokenInfo">Input vocab: -  Target vocab: -  Shapes: -</div>
+          <label data-i18n="train.epochs">Epochs</label>
+          <input type="number" id="trainEpochsToken" value="5" min="1">
+          <label data-i18n="train.batchSize">Batch Size</label>
+          <input type="number" id="trainBatchSizeToken" value="2" min="1">
+          <button class="btn btn-primary" onclick="trainModelToken()" data-i18n="train.trainBtn">Train</button>
+          <div id="trainTokenResult" class="result mt-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Evaluate -->
+    <section id="section-evaluate" class="section">
+      <h2 data-i18n="eval.title">Evaluate Model</h2>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="eval-standard" onclick="switchEvalTab('eval-standard')" data-i18n="eval.tab1">Standard</button>
+        <button class="tab-btn" data-tab="eval-auto" onclick="switchEvalTab('eval-auto')" data-i18n="eval.tab2">Auto JSON</button>
+        <button class="tab-btn" data-tab="eval-token" onclick="switchEvalTab('eval-token')" data-i18n="eval.tab3">Tokenization</button>
+      </div>
+
+      <div id="eval-standard" class="tab-content active">
+        <div class="card">
+          <label data-i18n="eval.inputData">Test Input Data (flat JSON array)</label>
+          <textarea id="evalInput" rows="2">[0.1,0.2,0.3,0.4,0.5]</textarea>
+          <label data-i18n="eval.targetData">Test Target Data (flat JSON array)</label>
+          <textarea id="evalTarget" rows="2">[1.0,0.0]</textarea>
+          <label data-i18n="eval.inputShape">Input Shape</label>
+          <input type="text" id="evalInputShape" value="1, 5">
+          <label data-i18n="eval.targetShape">Target Shape</label>
+          <input type="text" id="evalTargetShape" value="1, 2">
+          <button class="btn btn-primary" onclick="evaluateModel()" data-i18n="eval.evaluateBtn">Evaluate</button>
+          <div id="evalResult" class="result mt-1"></div>
+        </div>
+      </div>
+
+      <div id="eval-auto" class="tab-content">
+        <div class="card">
+          <label data-i18n="eval.inputDataRaw">Raw Input Data (nested JSON, shape auto-detected)</label>
+          <textarea id="evalInputRaw" rows="3">[[0.1,0.2,0.3,0.4,0.5],[0.5,0.4,0.3,0.2,0.1]]</textarea>
+          <label data-i18n="eval.targetDataRaw">Raw Target Data (nested JSON, shape auto-detected)</label>
+          <textarea id="evalTargetRaw" rows="3">[[1.0,0.0],[0.0,1.0]]</textarea>
+          <div class="auto-shape-info" id="evalAutoShape">Detected shapes: -</div>
+          <button class="btn btn-primary" onclick="evaluateModelAuto()" data-i18n="eval.evaluateBtn">Evaluate</button>
+          <div id="evalAutoResult" class="result mt-1"></div>
+        </div>
+      </div>
+
+      <div id="eval-token" class="tab-content">
+        <div class="card">
+          <label data-i18n="eval.textData">Text Input Data (one sentence per line)</label>
+          <textarea id="evalTextInput" rows="3">merhaba dunya nasilsin</textarea>
+          <label data-i18n="eval.textMaxSeqLen">Input Max Sequence Length</label>
+          <input type="number" id="evalMaxSeqLen" value="6" min="1">
+          <label data-i18n="eval.textTargets">Text Target Data (one target text per line)</label>
+          <textarea id="evalTextTarget" rows="3">selam</textarea>
+          <label data-i18n="eval.textTargetMaxSeqLen">Target Max Sequence Length</label>
+          <input type="number" id="evalTargetMaxSeqLen" value="3" min="1">
+          <div class="auto-shape-info" id="evalTokenInfo">Input vocab: -  Target vocab: -  Shapes: -</div>
+          <button class="btn btn-primary" onclick="evaluateModelToken()" data-i18n="eval.evaluateBtn">Evaluate</button>
+          <div id="evalTokenResult" class="result mt-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Save / Load -->
+    <section id="section-files" class="section">
+      <h2 data-i18n="files.title">Save &amp; Load Model</h2>
+      <div class="card">
+        <label data-i18n="files.filename">Filename</label>
+        <input type="text" id="fileFilename" value="my_model.bin">
+        <button class="btn btn-primary" onclick="saveModel()" data-i18n="files.saveBtn">Save Model</button>
+        <button class="btn" onclick="loadModel()" data-i18n="files.loadBtn">Load Model</button>
+        <button class="btn btn-danger" onclick="exitModel()" data-i18n="files.exitBtn">Exit Model</button>
+        <div id="fileResult" class="result mt-1"></div>
+      </div>
+    </section>
+
+    <!-- Resources -->
+    <section id="section-resources" class="section">
+      <h2 data-i18n="resources.title">MCP Resources</h2>
+      <div class="card">
+        <label data-i18n="resources.uri">Resource URI</label>
+        <select id="resourceUri" onchange="document.getElementById('resourceCustom').value=this.value">
+          <option value="model://info">model://info</option>
+          <option value="model://layers">model://layers</option>
+          <option value="model://layers/0">model://layers/0</option>
+          <option value="model://layers/1">model://layers/1</option>
+          <option value="model://weights/0">model://weights/0</option>
+        </select>
+        <input type="text" id="resourceCustom" placeholder="Custom URI">
+        <button class="btn btn-primary" onclick="readResource()" data-i18n="resources.readBtn">Read Resource</button>
+        <div id="resourceResult" class="result mt-1"></div>
+      </div>
+      <div class="card mt-1">
+        <h3 data-i18n="resources.prompts">Prompts</h3>
+        <label data-i18n="resources.promptName">Prompt Name</label>
+        <select id="promptName">
+          <option value="predict">predict</option>
+          <option value="train">train</option>
+        </select>
+        <button class="btn btn-primary" onclick="getPrompt()" data-i18n="resources.getPromptBtn">Get Prompt</button>
+        <div id="promptResult" class="result mt-1"></div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="section-settings" class="section">
+      <h2 data-i18n="settings.title">Settings</h2>
+      <div class="card">
+        <label data-i18n="settings.trainingMode">Training Mode</label>
+        <select id="trainingMode">
+          <option value="false" data-i18n="settings.evalMode">Evaluation</option>
+          <option value="true" data-i18n="settings.trainMode">Training</option>
+        </select>
+        <button class="btn btn-primary" onclick="setTrainingMode()" data-i18n="settings.applyBtn">Apply</button>
+        <div id="settingsResult" class="result mt-1"></div>
+      </div>
+      <div class="card mt-1">
+        <h3 data-i18n="settings.presetTitle">Preset: Create Simple Classifier</h3>
+        <p data-i18n="settings.presetDesc">Creates a 3-layer model: Dense(5→10) → ReLU → Dense(10→3) → Softmax</p>
+        <button class="btn" onclick="createClassifier()" data-i18n="settings.presetBtn">Create Classifier</button>
+        <div id="presetResult" class="result mt-1"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div id="confirmModal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <p id="confirmModalText">Kaydedilsin mi?</p>
+    <div class="modal-buttons">
+      <button id="confirmYesBtn" class="btn btn-primary">Evet</button>
+      <button id="confirmNoBtn" class="btn">Hayır</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
